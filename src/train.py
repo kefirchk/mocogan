@@ -77,18 +77,24 @@ def video_transform(video, image_transform):
     return vid
 
 
+n_channels = 3
+
+def select_channels(x):
+    return x[:n_channels, ::]
+
+
 if __name__ == "__main__":
     args = docopt.docopt(__doc__)
-    print args
+    print(args)
 
     n_channels = int(args['--n_channels'])
 
     image_transforms = transforms.Compose([
         PIL.Image.fromarray,
-        transforms.Scale(int(args["--image_size"])),
+        transforms.Resize(int(args["--image_size"])),
         transforms.ToTensor(),
-        lambda x: x[:n_channels, ::],
-        transforms.Normalize((0.5, 0.5, .5), (0.5, 0.5, 0.5)),
+        select_channels,
+        transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
     ])
 
     video_transforms = functools.partial(video_transform, image_transform=image_transforms)
@@ -122,12 +128,14 @@ if __name__ == "__main__":
         image_discriminator.cuda()
         video_discriminator.cuda()
 
-    trainer = Trainer(image_loader, video_loader,
-                      int(args['--print_every']),
-                      int(args['--batches']),
-                      args['<log_folder>'],
-                      use_cuda=torch.cuda.is_available(),
-                      use_infogan=args['--use_infogan'],
-                      use_categories=args['--use_categories'])
+    trainer = Trainer(
+        image_loader, video_loader,
+        int(args['--print_every']),
+        int(args['--batches']),
+        args['<log_folder>'],
+        use_cuda=torch.cuda.is_available(),
+        use_infogan=args['--use_infogan'],
+        use_categories=args['--use_categories']
+    )
 
     trainer.train(generator, image_discriminator, video_discriminator)

@@ -37,19 +37,20 @@ def save_video(ffmpeg, video, filename):
                '-pix_fmt', 'rgb24',
                '-r', '8',
                '-i', '-',
-               '-c:v', 'mjpeg',
-               '-q:v', '3',
-               '-an',
+               '-c:v', 'gif', #'mjpeg',
+               # '-q:v', '3',
+               # '-an',
                filename]
 
-    pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE)
-    pipe.stdin.write(video.tostring())
+    # pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE)
+    pipe = sp.Popen(command, stdin=sp.PIPE, stderr=sp.PIPE, bufsize=0)
+    pipe.stdin.write(video.tobytes())
 
 
 if __name__ == "__main__":
     args = docopt.docopt(__doc__)
 
-    generator = torch.load(args["<model>"], map_location={'cuda:0': 'cpu'})
+    generator = torch.load(args["<model>"], map_location={'cuda:0': 'cpu'}, weights_only=False)
     generator.eval()
     num_videos = int(args['--num_videos'])
     output_folder = args['<output_folder>']

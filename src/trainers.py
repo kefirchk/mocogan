@@ -44,9 +44,17 @@ def one_hot_to_class(tensor):
 
 
 class Trainer(object):
-    def __init__(self, image_sampler, video_sampler, log_interval, train_batches, log_folder, use_cuda=False,
-                 use_infogan=True, use_categories=True):
-
+    def __init__(
+        self,
+        image_sampler,
+        video_sampler,
+        log_interval,
+        train_batches,
+        log_folder,
+        use_cuda=False,
+        use_infogan=True,
+        use_categories=True
+    ):
         self.use_categories = use_categories
 
         self.gan_criterion = nn.BCEWithLogitsLoss()
@@ -183,11 +191,14 @@ class Trainer(object):
 
         return l_discriminator
 
-    def train_generator(self,
-                        image_discriminator, video_discriminator,
-                        sample_fake_images, sample_fake_videos,
-                        opt):
-
+    def train_generator(
+        self,
+        image_discriminator,
+        video_discriminator,
+        sample_fake_images,
+        sample_fake_videos,
+        opt
+    ):
         opt.zero_grad()
 
         # train on images
@@ -225,10 +236,12 @@ class Trainer(object):
 
         # create optimizers
         opt_generator = optim.Adam(generator.parameters(), lr=0.0002, betas=(0.5, 0.999), weight_decay=0.00001)
-        opt_image_discriminator = optim.Adam(image_discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999),
-                                             weight_decay=0.00001)
-        opt_video_discriminator = optim.Adam(video_discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999),
-                                             weight_decay=0.00001)
+        opt_image_discriminator = optim.Adam(
+            image_discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999), weight_decay=0.00001
+        )
+        opt_video_discriminator = optim.Adam(
+            video_discriminator.parameters(), lr=0.0002, betas=(0.5, 0.999), weight_decay=0.00001
+        )
 
         # training loop
 
@@ -257,36 +270,42 @@ class Trainer(object):
             opt_video_discriminator.zero_grad()
 
             # train image discriminator
-            l_image_dis = self.train_discriminator(image_discriminator, self.sample_real_image_batch,
-                                                   sample_fake_image_batch, opt_image_discriminator,
-                                                   self.image_batch_size, use_categories=False)
+            l_image_dis = self.train_discriminator(
+                image_discriminator, self.sample_real_image_batch,
+                sample_fake_image_batch, opt_image_discriminator,
+                self.image_batch_size, use_categories=False
+            )
 
             # train video discriminator
-            l_video_dis = self.train_discriminator(video_discriminator, self.sample_real_video_batch,
-                                                   sample_fake_video_batch, opt_video_discriminator,
-                                                   self.video_batch_size, use_categories=self.use_categories)
+            l_video_dis = self.train_discriminator(
+                video_discriminator, self.sample_real_video_batch,
+                sample_fake_video_batch, opt_video_discriminator,
+                self.video_batch_size, use_categories=self.use_categories
+            )
 
             # train generator
-            l_gen = self.train_generator(image_discriminator, video_discriminator,
-                                         sample_fake_image_batch, sample_fake_video_batch,
-                                         opt_generator)
+            l_gen = self.train_generator(
+                image_discriminator, video_discriminator,
+                sample_fake_image_batch, sample_fake_video_batch,
+                opt_generator
+            )
 
-            logs['l_gen'] += l_gen.data[0]
+            logs['l_gen'] += l_gen.item()
 
-            logs['l_image_dis'] += l_image_dis.data[0]
-            logs['l_video_dis'] += l_video_dis.data[0]
+            logs['l_image_dis'] += l_image_dis.item()
+            logs['l_video_dis'] += l_video_dis.item()
 
             batch_num += 1
 
             if batch_num % self.log_interval == 0:
 
                 log_string = "Batch %d" % batch_num
-                for k, v in logs.iteritems():
+                for k, v in logs.items():
                     log_string += " [%s] %5.3f" % (k, v / self.log_interval)
 
                 log_string += ". Took %5.2f" % (time.time() - start_time)
 
-                print log_string
+                print(log_string)
 
                 for tag, value in logs.items():
                     logger.scalar_summary(tag, value / self.log_interval, batch_num)

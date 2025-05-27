@@ -19,8 +19,8 @@ class VideoFolderDataset(torch.utils.data.Dataset):
         self.lengths = []
         self.images = []
 
-        if cache is not None and os.path.exists(cache):
-            with open(cache, 'r') as f:
+        if cache is not None and os.path.exists(cache) and os.path.getsize(cache) != 0:
+            with open(cache, 'rb') as f:
                 self.images, self.lengths = pickle.load(f)
         else:
             for idx, (im, categ) in enumerate(
@@ -33,11 +33,11 @@ class VideoFolderDataset(torch.utils.data.Dataset):
                     self.lengths.append(length)
 
             if cache is not None:
-                with open(cache, 'w') as f:
+                with open(cache, 'wb') as f:
                     pickle.dump((self.images, self.lengths), f)
 
         self.cumsum = np.cumsum([0] + self.lengths)
-        print "Total number of frames {}".format(np.sum(self.lengths))
+        print("Total number of frames {}".format(np.sum(self.lengths)))
 
     def __getitem__(self, item):
         path, label = self.images[item]
@@ -51,7 +51,6 @@ class VideoFolderDataset(torch.utils.data.Dataset):
 class ImageDataset(torch.utils.data.Dataset):
     def __init__(self, dataset, transform=None):
         self.dataset = dataset
-
         self.transforms = transform if transform is not None else lambda x: x
 
     def __getitem__(self, item):
@@ -75,7 +74,7 @@ class ImageDataset(torch.utils.data.Dataset):
             frame = video[i_from: i_to, :, ::]
 
         if frame.shape[0] == 0:
-            print "video {}. From {} to {}. num {}".format(video.shape, i_from, i_to, item)
+            print("video {}. From {} to {}. num {}".format(video.shape, i_from, i_to, item))
 
         return {"images": self.transforms(frame), "categories": target}
 
@@ -154,7 +153,7 @@ class VideoSampler(torch.utils.data.Dataset):
             result[k] = np.take(self.dataset.get_data()[k], ids, axis=0)
 
         subsequence_idx = None
-        print result[k].shape[0]
+        print(result[k].shape[0])
 
         # videos can be of various length, we randomly sample sub-sequences
         if result[k].shape[0] > self.video_length:
@@ -165,13 +164,13 @@ class VideoSampler(torch.utils.data.Dataset):
         elif result[k].shape[0] == self.video_length:
             subsequence_idx = np.arange(0, self.video_length)
         else:
-            print "Length is too short id - {}, len - {}".format(self.unique_ids[item], result[k].shape[0])
+            print("Length is too short id - {}, len - {}".format(self.unique_ids[item], result[k].shape[0]))
 
         if subsequence_idx:
             for k in self.dataset.keys:
                 result[k] = np.take(result[k], subsequence_idx, axis=0)
         else:
-            print result[self.dataset.keys[0]].shape
+            print(result[self.dataset.keys[0]].shape)
 
         if self.transforms is not None:
             for k, transform in self.transforms.iteritems():

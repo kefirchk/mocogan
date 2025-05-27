@@ -122,7 +122,6 @@ class PatchVideoDiscriminator(nn.Module):
 
     def forward(self, input):
         h = self.main(input).squeeze()
-
         return h, None
 
 
@@ -160,17 +159,17 @@ class VideoDiscriminator(nn.Module):
 
     def forward(self, input):
         h = self.main(input).squeeze()
-
         return h, None
 
 
 class CategoricalVideoDiscriminator(VideoDiscriminator):
     def __init__(self, n_channels, dim_categorical, n_output_neurons=1, use_noise=False, noise_sigma=None):
-        super(CategoricalVideoDiscriminator, self).__init__(n_channels=n_channels,
-                                                            n_output_neurons=n_output_neurons + dim_categorical,
-                                                            use_noise=use_noise,
-                                                            noise_sigma=noise_sigma)
-
+        super(CategoricalVideoDiscriminator, self).__init__(
+            n_channels=n_channels,
+            n_output_neurons=n_output_neurons + dim_categorical,
+            use_noise=use_noise,
+            noise_sigma=noise_sigma
+        )
         self.dim_categorical = dim_categorical
 
     def split(self, input):
@@ -183,8 +182,9 @@ class CategoricalVideoDiscriminator(VideoDiscriminator):
 
 
 class VideoGenerator(nn.Module):
-    def __init__(self, n_channels, dim_z_content, dim_z_category, dim_z_motion,
-                 video_length, ngf=64):
+    def __init__(
+        self, n_channels, dim_z_content, dim_z_category, dim_z_motion, video_length, ngf=64
+    ):
         super(VideoGenerator, self).__init__()
 
         self.n_channels = n_channels
@@ -194,7 +194,6 @@ class VideoGenerator(nn.Module):
         self.video_length = video_length
 
         dim_z = dim_z_motion + dim_z_category + dim_z_content
-
         self.recurrent = nn.GRUCell(dim_z_motion, dim_z_motion)
 
         self.main = nn.Sequential(
@@ -216,7 +215,6 @@ class VideoGenerator(nn.Module):
 
     def sample_z_m(self, num_samples, video_len=None):
         video_len = video_len if video_len is not None else self.video_length
-
         h_t = [self.get_gru_initial_state(num_samples)]
 
         for frame_num in range(video_len):
@@ -274,7 +272,7 @@ class VideoGenerator(nn.Module):
         z, z_category_labels = self.sample_z_video(num_samples, video_len)
 
         h = self.main(z.view(z.size(0), z.size(1), 1, 1))
-        h = h.view(h.size(0) / video_len, video_len, self.n_channels, h.size(3), h.size(3))
+        h = h.view(h.size(0) // video_len, video_len, self.n_channels, h.size(3), h.size(3))
 
         z_category_labels = torch.from_numpy(z_category_labels)
 
